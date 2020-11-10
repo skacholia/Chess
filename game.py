@@ -1,8 +1,11 @@
 import chess
+import chess.pgn
 import time
-import slowMover as player1
+import randomMover as player1
 import randomMover as player2
 
+game = chess.pgn.Game()
+node = game
 board = chess.Board()
 board1 = board.copy()
 board2 = board.copy()
@@ -36,6 +39,7 @@ while p1_time>0 and p2_time>0 and not board.is_game_over() and legal_move:
     
     if move in board.legal_moves:
         board.push(move)
+        node = node.add_variation(move)
     else:
         legal_move = False
 
@@ -63,4 +67,4 @@ elif board.is_seventyfive_moves():
     print("Draw - 75 moves without capture/pawn advancement")
 elif board.is_fivefold_repetition():
     print("Draw - position repeated 5 times")
-print(board)
+print(game)
