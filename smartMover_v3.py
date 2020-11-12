@@ -9,8 +9,7 @@ class Player:
 
     def __init__(self, board, color, time):
         self.color = color
-        self.time = time
-        self.depth = 2
+        self.depth = 1
 
     #Returns the best action for the player
     def move(self, board, time):
@@ -23,7 +22,7 @@ class Player:
         for move in moves:
             board.turn = self.color
             board.push(move)
-            moveScore = self.getValue(board, 0, 1, alpha, beta)
+            moveScore = self.getValue(board, 0, 1, alpha, beta, time)
             board.pop()
             
             if moveScore > bestMoveScore:
@@ -33,7 +32,7 @@ class Player:
         return bestMove
 
     #Evaluates the current state of the board
-    def evaluationFunction(self, board, agentIndex):
+    def evaluationFunction(self, board, agentIndex, time):
         #Need reasoning for why it's score = random.random() and not just score = 0
         score = random.random()
         
@@ -55,23 +54,23 @@ class Player:
         return score
 
     #For agentIndex, 0 is the current player, 1 is the opponent.
-    def getValue(self, board, currentDepth, agentIndex, alpha, beta):
+    def getValue(self, board, currentDepth, agentIndex, alpha, beta, time):
         if currentDepth == self.depth or board.is_game_over():   
-            return self.evaluationFunction(board, agentIndex)
+            return self.evaluationFunction(board, agentIndex, time)
         elif agentIndex == 0:
-            return self.maxValue(board, currentDepth, alpha, beta)
+            return self.maxValue(board, currentDepth, alpha, beta, time)
         else:
-            return self.minValue(board, currentDepth, 1, alpha, beta)
+            return self.minValue(board, currentDepth, 1, alpha, beta, time)
 
 
-    def maxValue(self, board, currentDepth, alpha, beta):
+    def maxValue(self, board, currentDepth, alpha, beta, time):
         maxValue = float("-inf")
-        board.turn = self.color
-
+        
+        #NOTICE: Check to see if board.turn = self.color is required. Chance to reduce calculation time here.
         for move in list(board.legal_moves):
             board.turn = self.color
             board.push(move)
-            maxValue = max(maxValue, self.getValue(board, currentDepth, 1, alpha, beta))
+            maxValue = max(maxValue, self.getValue(board, currentDepth, 1, alpha, beta, time))
             board.pop()
 
             if maxValue > beta:
@@ -81,19 +80,19 @@ class Player:
         return maxValue
     
 
-    def minValue(self, board, currentDepth, agentIndex, alpha, beta):
+    def minValue(self, board, currentDepth, agentIndex, alpha, beta, time):
         minValue = float('inf')
         
         for move in list(board.legal_moves):
             if agentIndex == 1:
                 board.turn = not self.color
                 board.push(move)
-                minValue = min(minValue, self.getValue(board, currentDepth + 1, 0, alpha, beta))
+                minValue = min(minValue, self.getValue(board, currentDepth + 1, 0, alpha, beta, time))
                 board.pop()
             else:
                 board.turn = self.color
                 board.push(move)
-                minValue = min(minValue, self.getValue(board, currentDepth, 1, alpha, beta))
+                minValue = min(minValue, self.getValue(board, currentDepth, 1, alpha, beta, time))
                 board.pop()
 
             if minValue < alpha:
