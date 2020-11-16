@@ -10,7 +10,7 @@ class Player:
     def __init__(self, board, color, time):
         self.color = color
         self.depth = 1
-        self. pawntable = [
+        self.pawntable = [
         0,  0,  0,  0,  0,  0,  0,  0,
         5, 10, 10,-20,-20, 10, 10,  5,
         5, -5,-10,  0,  0,-10, -5,  5,
@@ -72,23 +72,27 @@ class Player:
 
     #Returns the best action for the player
     def move(self, board, time):
-        moves = list(board.legal_moves)
-        bestMoveScore = float('-inf')
-        alpha = float('-inf')
-        beta = float('inf')
-        bestMove = random.choice(moves)
-        
-        for move in moves:
-            board.turn = self.color
-            board.push(move)
-            moveScore = self.getValue(board, 0, 1, alpha, beta, time)
-            board.pop()
+        try:
+            bestMove = chess.polyglot.MemoryMappedReader("bookfish.bin").weighted_choice(board).move()
+            return bestMove
+        except:
+            moves = list(board.legal_moves)
+            bestMoveScore = float('-inf')
+            alpha = float('-inf')
+            beta = float('inf')
+            bestMove = random.choice(moves)
             
-            if moveScore > bestMoveScore:
-                bestMoveScore = moveScore
-                bestMove = move
-        
-        return bestMove
+            for move in moves:
+                board.turn = self.color
+                board.push(move)
+                moveScore = self.getValue(board, 0, 1, alpha, beta, time)
+                board.pop()
+                
+                if moveScore > bestMoveScore:
+                    bestMoveScore = moveScore
+                    bestMove = move
+            
+            return bestMove
 
     #Evaluates the current state of the board
     def evaluationFunction(self, board, agentIndex, time):
@@ -97,17 +101,21 @@ class Player:
 
         #Counts every piece of each type and evaluates a score //needs improvement
         #Source for values: https://arxiv.org/pdf/2009.04374.pdf
-        for (piece, value) in [(chess.PAWN, 1), 
-                           (chess.BISHOP, 3.33), 
-                           (chess.KING, 0), 
-                           (chess.QUEEN, 9.5), 
-                           (chess.KNIGHT, 3.05),
-                           (chess.ROOK, 5.63)]:
+        for (piece, value) in [(chess.PAWN, 100), 
+                           (chess.BISHOP, 330), 
+                           (chess.KING, 2000), 
+                           (chess.QUEEN, 950), 
+                           (chess.KNIGHT, 305),
+                           (chess.ROOK, 563)]:
             score += len(board.pieces(piece, self.color)) * value
             score -= len(board.pieces(piece, not self.color)) * value
         for piece in [chess.PAWN, chess.BISHOP, chess.KING, chess.QUEEN, chess.KNIGHT, chess.ROOK]:
-            score += sum([self.pawntable[i] for i in board.pieces(piece, self.color)])
-            score -= sum([self.pawntable[i] for i in board.pieces(piece, not self.color)])
+            if self.color == chess.WHITE:
+                score += sum([self.pawntable[i] for i in board.pieces(piece, chess.WHITE)])
+                score -= sum([self.pawntable[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
+            if self.color == chess.BLACK:
+                score += sum([self.pawntable[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
+                score -= sum([self.pawntable[i] for i in board.pieces(piece, chess.WHITE)])
         #Will guarantee that the current board state will return the highest score due to a checkmate
         if board.is_checkmate():
             score += float('inf')
@@ -134,7 +142,7 @@ class Player:
             maxValue = max(maxValue, self.getValue(board, currentDepth, 1, alpha, beta, time))
             board.pop()
 
-            if maxValue > beta:
+            if maxValue >= beta:
                 return maxValue
             alpha = max(alpha, maxValue)
 
@@ -156,7 +164,7 @@ class Player:
                 minValue = min(minValue, self.getValue(board, currentDepth, 1, alpha, beta, time))
                 board.pop()
 
-            if minValue < alpha:
+            if minValue <= alpha:
                 return minValue
             beta = min(beta, minValue )
 
