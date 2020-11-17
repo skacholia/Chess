@@ -99,7 +99,7 @@ class Player:
             alpha = float('-inf')
             beta = float('inf')
             bestMove = random.choice(moves)
-            
+            random.shuffle(moves)
             for move in moves:
                 board.push(move)
                 moveScore = self.getValue(board, 0, 1, alpha, beta, time)
@@ -144,7 +144,7 @@ class Player:
     #For agentIndex, 0 is the current player, 1 is the opponent.
     def getValue(self, board, currentDepth, agentIndex, alpha, beta, time):
         if currentDepth == self.depth or board.is_game_over():   
-            return self.evaluate(board, time)
+            return self.quiesce(board, alpha, beta, time)
         elif agentIndex == 0:
             return self.maxValue(board, currentDepth, alpha, beta, time)
         else:
@@ -179,3 +179,22 @@ class Player:
             beta = min(beta, minValue)
 
         return minValue
+   
+    def quiesce(self, board, alpha, beta, time):
+        standPat = self.evaluate(board, time)
+        if standPat >= beta:
+            return beta
+        if alpha < standPat:
+            alpha = standPat
+
+        for move in list(board.legal_moves):
+            if board.is_capture(move):
+                board.push(move)        
+                score = -self.quiesce(board, -beta, -alpha, time)
+                board.pop()
+
+                if score >= beta:
+                    return beta
+                if score > alpha:
+                    alpha = score  
+        return alpha
