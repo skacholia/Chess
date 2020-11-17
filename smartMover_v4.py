@@ -1,7 +1,8 @@
 import random
 import chess
+import chess.polyglot
 import time
-#Chess AI V2
+#Chess AI V3
 #MiniMax Agent
 #November 11, 2020
 
@@ -9,58 +10,58 @@ class Player:
 
     def __init__(self, board, color, time):
         self.color = color
-        self.depth = 1
-        self.pawntable = [
+        self.depth = 0
+        self.pawnTable = [
         0,  0,  0,  0,  0,  0,  0,  0,
-        5, 10, 10,-20,-20, 10, 10,  5,
-        5, -5,-10,  0,  0,-10, -5,  5,
-        0,  0,  0, 20, 20,  0,  0,  0,
-        5,  5, 10, 25, 25, 10,  5,  5,
-        10, 10, 20, 30, 30, 20, 10, 10,
         50, 50, 50, 50, 50, 50, 50, 50,
+        10, 10, 20, 30, 30, 20, 10, 10,
+        5,  5, 10, 25, 25, 10,  5,  5,
+        0,  0,  0, 20, 20,  0,  0,  0,
+        5, -5,-10,  0,  0,-10, -5,  5,
+        5, 10, 10,-20,-20, 10, 10,  5,
         0,  0,  0,  0,  0,  0,  0,  0]
 
-        self.knightstable = [
+        self.knightTable = [
         -50,-40,-30,-30,-30,-30,-40,-50,
-        -40,-20,  0,  5,  5,  0,-20,-40,
-        -30,  5, 10, 15, 15, 10,  5,-30,
-        -30,  0, 15, 20, 20, 15,  0,-30,
-        -30,  5, 15, 20, 20, 15,  5,-30,
-        -30,  0, 10, 15, 15, 10,  0,-30,
         -40,-20,  0,  0,  0,  0,-20,-40,
-        -50,-40,-30,-30,-30,-30,-40,-50]
+        -30,  0, 10, 15, 15, 10,  0,-30,
+        -30,  5, 15, 20, 20, 15,  5,-30,
+        -30,  0, 15, 20, 20, 15,  0,-30,
+        -30,  5, 10, 15, 15, 10,  5,-30,
+        -40,-20,  0,  5,  5,  0,-20,-40,
+        -50,-40,-30,-30,-30,-30,-40,-50,]
 
-        self.bishopstable = [
+        self.bishopTable = [
         -20,-10,-10,-10,-10,-10,-10,-20,
-        -10,  5,  0,  0,  0,  0,  5,-10,
-        -10, 10, 10, 10, 10, 10, 10,-10,
-        -10,  0, 10, 10, 10, 10,  0,-10,
-        -10,  5,  5, 10, 10,  5,  5,-10,
-        -10,  0,  5, 10, 10,  5,  0,-10,
         -10,  0,  0,  0,  0,  0,  0,-10,
-        -20,-10,-10,-10,-10,-10,-10,-20]
+        -10,  0,  5, 10, 10,  5,  0,-10,
+        -10,  5,  5, 10, 10,  5,  5,-10,
+        -10,  0, 10, 10, 10, 10,  0,-10,
+        -10, 10, 10, 10, 10, 10, 10,-10,
+        -10,  5,  0,  0,  0,  0,  5,-10,
+        -20,-10,-10,-10,-10,-10,-10,-20,]
 
-        self.rookstable = [
-        0,  0,  0,  5,  5,  0,  0,  0,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,  0,  0,  0,  0,  0,  0, -5,
+        self.rookTable = [
+        0,  0,  0,  0,  0,  0,  0,  0,
         5, 10, 10, 10, 10, 10, 10,  5,
-        0,  0,  0,  0,  0,  0,  0,  0]
+        -5,  0,  0,  0,  0,  0,  0, -5,
+        -5,  0,  0,  0,  0,  0,  0, -5,
+        -5,  0,  0,  0,  0,  0,  0, -5,
+        -5,  0,  0,  0,  0,  0,  0, -5,
+        -5,  0,  0,  0,  0,  0,  0, -5,
+        0,  0,  0,  5,  5,  0,  0,  0]
 
-        self.queenstable = [
+        self.queenTable = [
         -20,-10,-10, -5, -5,-10,-10,-20,
         -10,  0,  0,  0,  0,  0,  0,-10,
-        -10,  5,  5,  5,  5,  5,  0,-10,
-        0,  0,  5,  5,  5,  5,  0, -5,
-        -5,  0,  5,  5,  5,  5,  0, -5,
         -10,  0,  5,  5,  5,  5,  0,-10,
-        -10,  0,  0,  0,  0,  0,  0,-10,
+        -5,  0,  5,  5,  5,  5,  0, -5,
+        0,  0,  5,  5,  5,  5,  0, -5,
+        -10,  5,  5,  5,  5,  5,  0,-10,
+        -10,  0,  5,  0,  0,  0,  0,-10,
         -20,-10,-10, -5, -5,-10,-10,-20]
 
-        self.kingstable = [
+        self.kingMiddleTable = [
         20, 30, 10,  0,  0, 10, 30, 20,
         20, 20,  0,  0,  0,  0, 20, 20,
         -10,-20,-20,-20,-20,-20,-20,-10,
@@ -70,12 +71,29 @@ class Player:
         -30,-40,-40,-50,-50,-40,-40,-30,
         -30,-40,-40,-50,-50,-40,-40,-30]
 
+        self.kingEndTable = [
+        -50,-40,-30,-20,-20,-30,-40,-50,
+        -30,-20,-10,  0,  0,-10,-20,-30,
+        -30,-10, 20, 30, 30, 20,-10,-30,
+        -30,-10, 30, 40, 40, 30,-10,-30,
+        -30,-10, 30, 40, 40, 30,-10,-30,
+        -30,-10, 20, 30, 30, 20,-10,-30,
+        -30,-30,  0,  0,  0,  0,-30,-30,
+        -50,-30,-30,-30,-30,-30,-30,-50
+        ]
+
+        self.kingTable = self.kingMiddleTable
+
+
     #Returns the best action for the player
     def move(self, board, time):
         try:
-            bestMove = chess.polyglot.MemoryMappedReader("bookfish.bin").weighted_choice(board).move()
-            return bestMove
+            return chess.polyglot.MemoryMappedReader("bookfish.bin").weighted_choice(board).move
         except:
+            #If checks:#
+            if len(board.pieces(chess.QUEEN, self.color)) == 0 and len(board.pieces(chess.QUEEN, not self.color)) == 0:
+                self.kingTable = self.kingEndTable
+
             moves = list(board.legal_moves)
             bestMoveScore = float('-inf')
             alpha = float('-inf')
@@ -94,46 +112,49 @@ class Player:
             
             return bestMove
 
-    #Evaluates the current state of the board
-    def evaluationFunction(self, board, agentIndex, time):
-        #Need reasoning for why it's score = random.random() and not just score = 0
-        score = random.random()
 
+    #Evaluates the current state of the board
+    def evaluationFunction(self, board, time):
+        #Need reasoning for why it's score = random.random() and not just score = 0
+        score = 0
+        
+        #Can include (chess.KING, 0),
         #Counts every piece of each type and evaluates a score //needs improvement
-        #Source for values: https://arxiv.org/pdf/2009.04374.pdf
-        for (piece, value) in [(chess.PAWN, 100), 
-                           (chess.BISHOP, 330), 
-                           (chess.KING, 2000), 
-                           (chess.QUEEN, 950), 
-                           (chess.KNIGHT, 305),
-                           (chess.ROOK, 563)]:
+        #Source for values: https://arxiv.org/pdf/2009.04374.pdf or https://en.wikipedia.org/wiki/Chess_strategy
+        for (piece, value, table) in [(chess.PAWN, 100, self.pawnTable), 
+                           (chess.BISHOP, 333, self.bishopTable),
+                           (chess.QUEEN, 950, self.queenTable),
+                           (chess.KING, 0, self.kingTable),
+                           (chess.KNIGHT, 305, self.knightTable),
+                           (chess.ROOK, 563, self.rookTable)]:
             score += len(board.pieces(piece, self.color)) * value
             score -= len(board.pieces(piece, not self.color)) * value
-        for piece in [chess.PAWN, chess.BISHOP, chess.KING, chess.QUEEN, chess.KNIGHT, chess.ROOK]:
-            if self.color == chess.WHITE:
-                score += sum([self.pawntable[i] for i in board.pieces(piece, chess.WHITE)])
-                score -= sum([self.pawntable[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
-            if self.color == chess.BLACK:
-                score += sum([self.pawntable[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
-                score -= sum([self.pawntable[i] for i in board.pieces(piece, chess.WHITE)])
+            if board.turn == chess.WHITE:
+                score += sum([table[i] for i in board.pieces(piece, chess.WHITE)])
+                score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
+            if board.turn == chess.BLACK:
+                score += sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
+                score -= sum([table[i] for i in board.pieces(piece, chess.WHITE)])
+        
         #Will guarantee that the current board state will return the highest score due to a checkmate
         if board.is_checkmate():
             score += float('inf')
-       
+        
         return score
+
 
     #For agentIndex, 0 is the current player, 1 is the opponent.
     def getValue(self, board, currentDepth, agentIndex, alpha, beta, time):
         if currentDepth == self.depth or board.is_game_over():   
-            return self.evaluationFunction(board, agentIndex, time)
+            return self.evaluationFunction(board, time)
         elif agentIndex == 0:
             return self.maxValue(board, currentDepth, alpha, beta, time)
         else:
-            return self.minValue(board, currentDepth, 1, alpha, beta, time)
+            return self.minValue(board, currentDepth, alpha, beta, time)
 
 
     def maxValue(self, board, currentDepth, alpha, beta, time):
-        maxValue = float("-inf")
+        maxValue = float('-inf')
         
         #NOTICE: Check to see if board.turn = self.color is required. Chance to reduce calculation time here.
         for move in list(board.legal_moves):
@@ -149,23 +170,17 @@ class Player:
         return maxValue
     
 
-    def minValue(self, board, currentDepth, agentIndex, alpha, beta, time):
+    def minValue(self, board, currentDepth, alpha, beta, time):
         minValue = float('inf')
         
         for move in list(board.legal_moves):
-            if agentIndex == 1:
-                board.turn = not self.color
-                board.push(move)
-                minValue = min(minValue, self.getValue(board, currentDepth + 1, 0, alpha, beta, time))
-                board.pop()
-            else:
-                board.turn = self.color
-                board.push(move)
-                minValue = min(minValue, self.getValue(board, currentDepth, 1, alpha, beta, time))
-                board.pop()
-
+            board.turn = not self.color
+            board.push(move)
+            minValue = min(minValue, self.getValue(board, currentDepth + 1, 0, alpha, beta, time))
+            board.pop()
+        
             if minValue <= alpha:
                 return minValue
-            beta = min(beta, minValue )
+            beta = min(beta, minValue)
 
         return minValue
