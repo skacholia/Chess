@@ -10,7 +10,7 @@ class Player:
 
     def __init__(self, board, color, time):
         self.color = color
-        self.depth = 2
+        self.depth = 1
         self.pawnTable = [
         0,  0,  0,  0,  0,  0,  0,  0,
         50, 50, 50, 50, 50, 50, 50, 50,
@@ -93,7 +93,7 @@ class Player:
             #If checks:#
             if len(board.pieces(chess.QUEEN, self.color)) == 0 and len(board.pieces(chess.QUEEN, not self.color)) == 0:
                 self.kingTable = self.kingEndTable
-            self.depth = 2
+            
 
             moves = list(board.legal_moves)
             bestMoveScore = float('-inf')
@@ -102,8 +102,6 @@ class Player:
             bestMove = random.choice(moves)
             
             for move in moves:
-                if len(moves) >= 10:
-                    self.depth = 1
                 board.push(move)
                 moveScore = self.getValue(board, 0, 1, alpha, beta, time)
                 board.pop()
@@ -118,7 +116,7 @@ class Player:
     #Evaluates the current state of the board.
     #We always want to evaluate the board for self.color score.
     def evaluate(self, board, time):
-        score = 0
+        score = random.random()
         
         #Can include (chess.KING, 0),
         #Counts every piece of each type and evaluates a score //needs improvement
@@ -157,12 +155,8 @@ class Player:
 
     def maxValue(self, board, currentDepth, alpha, beta, time):
         maxValue = float('-inf')
-        moves = list(board.legal_moves)
         
-        for move in moves:
-            if len(moves) >= 10:
-                self.depth = 1
-
+        for move in list(board.legal_moves):
             board.push(move)
             maxValue = max(maxValue, self.getValue(board, currentDepth, 1, alpha, beta, time))
             board.pop()
@@ -176,12 +170,8 @@ class Player:
 
     def minValue(self, board, currentDepth, alpha, beta, time):
         minValue = float('inf')
-        moves = list(board.legal_moves)
-
-        for move in moves:
-            if len(moves) >= 10:
-                self.depth = 1
         
+        for move in list(board.legal_moves):
             board.push(move)
             minValue = min(minValue, self.getValue(board, currentDepth + 1, 0, alpha, beta, time))
             board.pop()
