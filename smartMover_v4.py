@@ -114,7 +114,7 @@ class Player:
 
 
     #Evaluates the current state of the board
-    def evaluationFunction(self, board, time):
+    def evaluate(self, board, time):
         #Need reasoning for why it's score = random.random() and not just score = 0
         score = 0
         
@@ -146,7 +146,7 @@ class Player:
     #For agentIndex, 0 is the current player, 1 is the opponent.
     def getValue(self, board, currentDepth, agentIndex, alpha, beta, time):
         if currentDepth == self.depth or board.is_game_over():   
-            return self.evaluationFunction(board, time)
+            return self.evaluate(board, time)
         elif agentIndex == 0:
             return self.maxValue(board, currentDepth, alpha, beta, time)
         else:
