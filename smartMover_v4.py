@@ -93,6 +93,7 @@ class Player:
             #If checks:#
             if len(board.pieces(chess.QUEEN, self.color)) == 0 and len(board.pieces(chess.QUEEN, not self.color)) == 0:
                 self.kingTable = self.kingEndTable
+            
 
             moves = list(board.legal_moves)
             bestMoveScore = float('-inf')
@@ -112,9 +113,10 @@ class Player:
             return bestMove
 
 
-    #Evaluates the current state of the board
+    #Evaluates the current state of the board.
+    #We always want to evaluate the board for self.color score.
     def evaluate(self, board, time):
-        score = 0
+        score = random.random()
         
         #Can include (chess.KING, 0),
         #Counts every piece of each type and evaluates a score //needs improvement
