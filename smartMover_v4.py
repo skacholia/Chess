@@ -10,7 +10,7 @@ class Player:
 
     def __init__(self, board, color, time):
         self.color = color
-        self.depth = 0
+        self.depth = 1
         self.pawnTable = [
         0,  0,  0,  0,  0,  0,  0,  0,
         50, 50, 50, 50, 50, 50, 50, 50,
