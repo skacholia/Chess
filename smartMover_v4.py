@@ -2,15 +2,15 @@ import random
 import chess
 import chess.polyglot
 import time
-#Chess AI V3
+#Chess AI V4
 #MiniMax Agent
-#November 11, 2020
+#November 17, 2020
 
 class Player:
 
     def __init__(self, board, color, time):
         self.color = color
-        self.depth = 1
+        self.depth = 0
         self.pawnTable = [
         0,  0,  0,  0,  0,  0,  0,  0,
         50, 50, 50, 50, 50, 50, 50, 50,
@@ -93,14 +93,13 @@ class Player:
             #If checks:#
             if len(board.pieces(chess.QUEEN, self.color)) == 0 and len(board.pieces(chess.QUEEN, not self.color)) == 0:
                 self.kingTable = self.kingEndTable
-            
 
             moves = list(board.legal_moves)
             bestMoveScore = float('-inf')
             alpha = float('-inf')
             beta = float('inf')
             bestMove = random.choice(moves)
-            random.shuffle(moves)
+            
             for move in moves:
                 board.push(move)
                 moveScore = self.getValue(board, 0, 1, alpha, beta, time)
@@ -128,13 +127,13 @@ class Player:
                            (chess.KNIGHT, 305, self.knightTable),
                            (chess.ROOK, 563, self.rookTable)]:
             score += len(board.pieces(piece, self.color)) * value
-            score -= len(board.pieces(piece, not self.color)) * value
+            #score -= len(board.pieces(piece, not self.color)) * value
             if board.turn == chess.WHITE:
                 score += sum([table[i] for i in board.pieces(piece, chess.WHITE)])
-                score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
+                #score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
             else:
                 score += sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
-                score -= sum([table[i] for i in board.pieces(piece, chess.WHITE)])
+                #score -= sum([table[i] for i in board.pieces(piece, chess.WHITE)])
         
         #Will guarantee that the current board state will return the highest score due to a checkmate
         if board.is_checkmate():
