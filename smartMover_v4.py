@@ -99,7 +99,6 @@ class Player:
             alpha = float('-inf')
             beta = float('inf')
             bestMove = random.choice(moves)
-            random.shuffle(moves)
 
             for move in moves:
                 board.push(move)
@@ -131,10 +130,10 @@ class Player:
             score -= len(board.pieces(piece, not self.color)) * value
             if board.turn == chess.WHITE:
                 score += sum([table[i] for i in board.pieces(piece, chess.WHITE)])
-                score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
+               # score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
             else:
                 score += sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
-                score -= sum([table[i] for i in board.pieces(piece, chess.WHITE)])
+              #  score -= sum([table[i] for i in board.pieces(piece, chess.WHITE)])
         
         #Will guarantee that the current board state will return the highest score due to a checkmate
         if board.is_checkmate():
