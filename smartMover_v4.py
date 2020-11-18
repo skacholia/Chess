@@ -10,7 +10,7 @@ class Player:
 
     def __init__(self, board, color, time):
         self.color = color
-        self.depth = 0
+        self.depth = 1
         self.pawnTable = [
         0,  0,  0,  0,  0,  0,  0,  0,
         50, 50, 50, 50, 50, 50, 50, 50,
@@ -99,7 +99,8 @@ class Player:
             alpha = float('-inf')
             beta = float('inf')
             bestMove = random.choice(moves)
-            
+            random.shuffle(moves)
+
             for move in moves:
                 board.push(move)
                 moveScore = self.getValue(board, 0, 1, alpha, beta, time)
@@ -127,13 +128,13 @@ class Player:
                            (chess.KNIGHT, 305, self.knightTable),
                            (chess.ROOK, 563, self.rookTable)]:
             score += len(board.pieces(piece, self.color)) * value
-            #score -= len(board.pieces(piece, not self.color)) * value
+            score -= len(board.pieces(piece, not self.color)) * value
             if board.turn == chess.WHITE:
                 score += sum([table[i] for i in board.pieces(piece, chess.WHITE)])
-                #score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
+                score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
             else:
                 score += sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])
-                #score -= sum([table[i] for i in board.pieces(piece, chess.WHITE)])
+                score -= sum([table[i] for i in board.pieces(piece, chess.WHITE)])
         
         #Will guarantee that the current board state will return the highest score due to a checkmate
         if board.is_checkmate():
