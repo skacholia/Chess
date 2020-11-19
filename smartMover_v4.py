@@ -88,7 +88,7 @@ class Player:
     #Returns the best action for the player
     def move(self, board, time):
         try:
-            return chess.polyglot.MemoryMappedReader("bookfish.bin").weighted_choice(board).move
+            return chess.polyglot.MemoryMappedReader("data/bookfish.bin").weighted_choice(board).move
         except:
             #If checks:#
             if len(board.pieces(chess.QUEEN, self.color)) == 0 and len(board.pieces(chess.QUEEN, not self.color)) == 0:
