@@ -9,7 +9,7 @@ Opening Book: Suhan implemented
 
 Minimax with Alpha Beta Pruning: Suhan created initial version, Josh updated
 
-Quescience Search: Suhan created initial version which didn't work, deleted; Josh created workable version
+Quescience Search: Suhan created initial version, Josh modified into usable version 
 
 
     
