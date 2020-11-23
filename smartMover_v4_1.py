@@ -105,18 +105,20 @@ class Player:
             beta = float('inf')
             bestMove = random.choice(moves)
             
-            sortedMoves = np.empty((0, 2))
-            for move in moves:
+            def f1(move, board):
                 board.push(move)
                 sortedMoves = np.append(sortedMoves, np.array([[move, self.evaluate(board)]]), axis = 0)
                 board.pop()
+            moves = pool.map(f1, (move, board))
             moves = sortedMoves[sortedMoves[:,1].argsort()[::-1]][:,0]
-            
-            for move in moves:
+
+            def f2(move, board):
                 board.push(move)
                 moveScore = self.getValue(board, 0, 1, alpha, beta, time)
                 board.pop()
-                
+                return moveScore
+            scores = pool.map(f2, (move, board))
+            for score in scores:
                 if moveScore > bestMoveScore:
                     bestMoveScore = moveScore
                     bestMove = move
