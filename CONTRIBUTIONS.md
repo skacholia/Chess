@@ -11,5 +11,4 @@ Minimax with Alpha Beta Pruning: Suhan created initial version, Josh updated
 
 Quescience Search: Suhan created initial version, Josh modified into current version 
 
-
-    
+Numpy arrays instead of lists: Henry created initial version, Josh created the final version.
