@@ -7,7 +7,7 @@ import numpy as np
 import time as t
 #Chess AI V5
 #MiniMax Agent
-#November 23, 2020
+#November 18, 2020
 
 class Player:
 
@@ -95,17 +95,11 @@ class Player:
             return chess.polyglot.MemoryMappedReader("data/book.bin").weighted_choice(board).move
         except:
             self.start = t.time()      
-            
             bestMove = None
             self.depth = 2
-            val = 0.3
+            val = 0.25
             while t.time() - self.start <= val:
                 tempTime = t.time()
-                
-                if t.time() - self.start >= time + 10:
-                    self.depth = 2
-                elif time <= 30:
-                    val = 0.4
 
                 bestMoveScore, alpha, beta = float('-inf'), float('-inf'), float('inf')
                 
@@ -166,7 +160,7 @@ class Player:
         return coeff * score
 
 
-    def negamax(self, board, currentDepth, alpha, beta):    
+    def negamax(self, board, currentDepth, alpha, beta):
         if currentDepth == self.depth or len(list(board.legal_moves)) == 0 or board.is_game_over():
             return self.quiesce(board, alpha, beta, 1) #last term is the max quiesce depth
 
