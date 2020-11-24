@@ -7,7 +7,7 @@ import numpy as np
 import time as t
 #Chess AI V5
 #MiniMax Agent
-#November 18, 2020
+#November 23, 2020
 
 class Player:
 
