@@ -92,16 +92,18 @@ class Player:
     def move(self, board, time):
         try:
             #Selfmade opening book using https://rebel13.nl/download/polyglot.html
+            print(hi)
             return chess.polyglot.MemoryMappedReader("data/book.bin").weighted_choice(board).move
         except:
             self.start = t.time()      
             bestMove = None
+            bestMoveScore = float('-inf')
+            
             self.depth = 2
-            val = 0.25
-            while t.time() - self.start <= val:
+            while t.time() - self.start <= 0.2:
                 tempTime = t.time()
 
-                bestMoveScore, alpha, beta = float('-inf'), float('-inf'), float('inf')
+                alpha, beta = float('-inf'), float('inf')
                 
                 #If there are no queens, the game is set as End Game
                 if len(board.pieces(chess.QUEEN, self.color)) == 0 and len(board.pieces(chess.QUEEN, not self.color)) == 0:
@@ -137,7 +139,7 @@ class Player:
         if board.is_checkmate():
             return coeff * float('inf')
         
-        score = 0
+        score = random.random()
 
         #Source for values: https://arxiv.org/pdf/2009.04374.pdf or https://en.wikipedia.org/wiki/Chess_strategy
         pieces, square_mirror, turn, color = board.pieces, chess.square_mirror, board.turn, self.color
@@ -152,7 +154,7 @@ class Player:
             score += (len(pieces(piece, color)) - len(pieces(piece, not color))) * value
             if turn:#if board.turn == chess.WHITE
                 score += sum([table[i] for i in pieces(piece, chess.WHITE)])
-                #score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)]) ----------unecessary increase in calculation time
+                #score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)]) #----------unecessary increase in calculation time
             else:
                 score += sum([table[square_mirror(i)] for i in pieces(piece, chess.BLACK)])
                 #score -= sum([table[i] for i in board.pieces(piece, chess.WHITE)])
@@ -161,8 +163,8 @@ class Player:
 
 
     def negamax(self, board, currentDepth, alpha, beta):
-        if currentDepth == self.depth or len(list(board.legal_moves)) == 0 or board.is_game_over():
-            return self.quiesce(board, alpha, beta, 1) #last term is the max quiesce depth
+        if currentDepth >= self.depth or len(list(board.legal_moves)) == 0 or board.is_game_over():
+            return self.quiesce(board, alpha, beta, 0) #last term is the max quiesce depth
 
         push, pop, negamax = board.push, board.pop, self.negamax
         for move in self.sortMoves(board, list(board.legal_moves)):
