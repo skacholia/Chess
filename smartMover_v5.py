@@ -105,7 +105,7 @@ class Player:
                 if t.time() - self.start >= time + 10:
                     self.depth = 2
                 elif time <= 30:
-                    val = 0.5
+                    val = 0.4
 
                 bestMoveScore, alpha, beta = float('-inf'), float('-inf'), float('inf')
                 
