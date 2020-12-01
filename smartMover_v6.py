@@ -110,9 +110,9 @@ class Player:
                 tempTime = t.time()
                 bestMoveScore, alpha, beta = float('-inf'), float('-inf'), float('inf')
                 
-                self.nodes = 0
-                self.quiesceNodes = 0
-                self.quiesceDepth = 1
+                #self.nodes = 0
+                #self.quiesceNodes = 0
+                #self.quiesceDepth = 1
                 
                 #If there are no queens, the game is set as End Game
                 if len(board.pieces(chess.QUEEN, self.color)) == 0 and len(board.pieces(chess.QUEEN, not self.color)) == 0:
@@ -135,7 +135,7 @@ class Player:
                     
                     self.kingTable = self.kingMiddleTable
                 previousBest = bestMove
-                print ("Color:",self.color,"|| Nodes:",self.nodes,"|| QuiesceNodes:",self.quiesceNodes,"|| Score:",bestMoveScore,"|| Move:",bestMove,"|| Time:",time,"|| Search Time:",t.time() - self.start,"|| Depth:",self.depth,"|| Quiesce Depth:",self.quiesceDepth)
+                #print ("Color:",self.color,"|| Nodes:",self.nodes,"|| QuiesceNodes:",self.quiesceNodes,"|| Score:",bestMoveScore,"|| Move:",bestMove,"|| Time:",time,"|| Search Time:",t.time() - self.start,"|| Depth:",self.depth,"|| Quiesce Depth:",self.quiesceDepth)
                 
                 self.depth += 1
                 time -= t.time() - tempTime
@@ -148,11 +148,12 @@ class Player:
             factor = 2 - nMoves / 10
             target = time / (50 - self.moveNumber)
             self.moveTime = factor * target
+            #print(self.bookMoves,self.moveTime)
             return bestMove
 
 
     def negamax(self, board, currentDepth, alpha, beta):
-        self.nodes += 1
+        #self.nodes += 1
 
         if t.time() - self.start >= self.moveTime:
             if board.turn == self.color:
@@ -163,7 +164,7 @@ class Player:
         
         if currentDepth == self.depth or len(list(board.legal_moves)) == 0 or board.is_game_over():
             #return self.quiesce(board, alpha, beta, 1) #last term is the max quiesce depth
-            return self.quiesce(board, alpha, beta, 1)
+            return self.quiesce(board, alpha, beta)#, 1
 
         
         #print(self.sortMoves(board, list(board.legal_moves)))
@@ -182,9 +183,9 @@ class Player:
 
 
     #Fixes horizon problem issues
-    def quiesce(self, board, alpha, beta, currentDepth):
-        self.nodes += 1
-        self.quiesceNodes += 1
+    def quiesce(self, board, alpha, beta):#currentDepth
+        #self.nodes += 1
+        #self.quiesceNodes += 1
         
         if t.time() - self.start >= self.moveTime:
             if board.turn == self.color:
@@ -193,8 +194,8 @@ class Player:
                 coeff = -1
             return coeff * 123456789
 
-        if self.quiesceDepth < currentDepth:
-            self.quiesceDepth += 1
+        """if self.quiesceDepth < currentDepth:
+            self.quiesceDepth += 1"""
 
         stand_pat = self.evaluate(board)
 
@@ -210,7 +211,7 @@ class Player:
         #Move Ordering yields an unecessary increase in time --- self.sortMoves(board, self.captureMoves(board))
         for move in self.captureMoves(board):
             board.push(move)
-            score = -self.quiesce(board, -beta, -alpha, currentDepth + 1)
+            score = -self.quiesce(board, -beta, -alpha)#, currentDepth + 1
             board.pop()
 
             if score >= beta + 1:
