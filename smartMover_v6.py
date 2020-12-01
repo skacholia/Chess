@@ -88,7 +88,8 @@ class Player:
         self.quiesceDepth = 1
         self.nodes = 0
         self.quiesceNodes = 0
-        self.moveTime = 60
+        self.moveTime = 10
+        self.moveNumber = 1
 
 
     #Returns the best action for the player
@@ -135,7 +136,9 @@ class Player:
                 
                 self.depth += 1
                 time -= t.time() - tempTime
-    
+            self.moveNumber += 1
+            self.moveTime = time/(80 - self.moveNumber)
+            print(self.moveTime)
             return bestMove
 
 
@@ -215,7 +218,7 @@ class Player:
         else:
             coeff = -1
         
-        score = random.random()
+        score = 0
 
         #Source for values: https://arxiv.org/pdf/2009.04374.pdf or https://en.wikipedia.org/wiki/Chess_strategy
         for (piece, value, table) in [(chess.PAWN, 100, self.pawnTable), 
