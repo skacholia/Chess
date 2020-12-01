@@ -90,12 +90,15 @@ class Player:
         self.quiesceNodes = 0
         self.moveTime = 10
         self.moveNumber = 1
+        self.bookMoves = 0
 
 
     #Returns the best action for the player
     def move(self, board, time):
         try:
             #Selfmade opening book using https://rebel13.nl/download/polyglot.html
+            move = chess.polyglot.MemoryMappedReader("data/bookfish.bin").weighted_choice(board).move
+            self.bookMoves += 1
             return chess.polyglot.MemoryMappedReader("data/bookfish.bin").weighted_choice(board).move
         except:
             self.start = t.time()      
@@ -136,9 +139,15 @@ class Player:
                 
                 self.depth += 1
                 time -= t.time() - tempTime
-            self.moveNumber += 1
-            self.moveTime = time/(80 - self.moveNumber)
-            print(self.moveTime)
+            #self.moveNumber += 1
+            #self.moveTime = time/(50 - self.moveNumber)
+            #print(self.moveTime)
+
+
+            nMoves = min(self.bookMoves, 10)
+            factor = 2 - nMoves / 10
+            target = time / (50 - self.moveNumber)
+            self.moveTime = factor * target
             return bestMove
 
 
