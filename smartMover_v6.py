@@ -86,10 +86,9 @@ class Player:
         self.color = color
         self.depth = 1
         self.quiesceDepth = 1
-        self.nodes = 0
-        self.quiesceNodes = 0
-        self.moveTime = 10
-        self.moveNumber = 1
+        self.nodes, self.quiesceNodes = 0, 0
+        self.moveTime = 1
+        self.tester = 0
         self.bookMoves = 0
 
 
@@ -99,79 +98,83 @@ class Player:
             #Selfmade opening book using https://rebel13.nl/download/polyglot.html
             move = chess.polyglot.MemoryMappedReader("data/bookfish.bin").weighted_choice(board).move
             self.bookMoves += 1
-            return chess.polyglot.MemoryMappedReader("data/bookfish.bin").weighted_choice(board).move
+            return move
         except:
             self.start = t.time()      
-            bestMove = random.choice(list(board.legal_moves))
-            bestMoveScore, alpha, beta = float('-inf'), float('-inf'), float('inf')
+            bestMove, bestMoveScore, alpha, beta = random.choice(list(board.legal_moves)), float('-inf'), float('-inf'), float('inf')
             self.depth = 1
-            previousBest = bestMove
+            previousBestMove, previousBestScore = bestMove, bestMoveScore
+
             while t.time() - self.start <= self.moveTime:
                 tempTime = t.time()
                 bestMoveScore, alpha, beta = float('-inf'), float('-inf'), float('inf')
                 
-                #self.nodes = 0
-                #self.quiesceNodes = 0
-                #self.quiesceDepth = 1
+                self.nodes = 0
+                self.quiesceNodes = 0
+                self.quiesceDepth = 1
                 
                 #If there are no queens, the game is set as End Game
                 if len(board.pieces(chess.QUEEN, self.color)) == 0 and len(board.pieces(chess.QUEEN, not self.color)) == 0:
                     self.kingTable = self.kingEndTable
+                else:
+                    self.kingTable = self.kingMiddleTable
 
-                for move in self.sortMoves(board, list(board.legal_moves)):
-                    board.push(move)
-                    score = -self.negamax(board, 1, -beta, -alpha)#Implementation of minimax
-                    board.pop()
+                push, pop = board.push, board.pop
+                for move in self.sortMoves(board, board.legal_moves):#Root Node
+                    push(move)
+                    score = -self.negamax(board, 1, -beta, -alpha)
+                    pop()
                     
-                    if score == 123456789:
-                        bestMove = previousBest
+                    if score == 123456789 or score == -123456789:#Score Code that returns if t.time - self.start >= self.moveTime
+                        bestMove, bestMoveScore = previousBestMove, previousBestScore
                         break
+                    if score > 10000:
+                        return move
                     if score > alpha:
                         alpha = score
                     if score > bestMoveScore:
-                        bestMoveScore = score
-                        bestMove = move
-                    
-                    
-                    self.kingTable = self.kingMiddleTable
-                previousBest = bestMove
-                #print ("Color:",self.color,"|| Nodes:",self.nodes,"|| QuiesceNodes:",self.quiesceNodes,"|| Score:",bestMoveScore,"|| Move:",bestMove,"|| Time:",time,"|| Search Time:",t.time() - self.start,"|| Depth:",self.depth,"|| Quiesce Depth:",self.quiesceDepth)
+                        bestMoveScore, bestMove = score, move
+
+                previousBestMove, previousBestScore = bestMove, bestMoveScore
+                print ("Color:",self.color,"|| Nodes:",self.nodes,"|| QuiesceNodes:",self.quiesceNodes,"|| Score:",bestMoveScore,"|| Move:",bestMove,"|| Time:",time,"|| Search Time:",t.time() - self.start,"|| Depth:",self.depth,"|| Quiesce Depth:",self.quiesceDepth)
+                #Tester allows us to see which areas of the program take up the most time
+                #print(self.tester,"||", self.tester / (t.time() - self.start) * 100,"%")
                 
+                if t.time() - self.start >= self.moveTime / 2:
+                    break
+
+                nMoves = min(self.bookMoves, 10)
+                factor = 2 - nMoves / 10
+                target = time / (50 - board.halfmove_clock)
+                self.moveTime = factor * target
+
                 self.depth += 1
                 time -= t.time() - tempTime
-            #self.moveNumber += 1
-            #self.moveTime = time/(50 - self.moveNumber)
-            #print(self.moveTime)
 
 
-            nMoves = min(self.bookMoves, 10)
-            factor = 2 - nMoves / 10
-            target = time / (50 - self.moveNumber)
-            self.moveTime = factor * target
-            #print(self.bookMoves,self.moveTime)
             return bestMove
 
 
     def negamax(self, board, currentDepth, alpha, beta):
-        #self.nodes += 1
+        self.nodes += 1
 
         if t.time() - self.start >= self.moveTime:
-            if board.turn == self.color:
+            """if board.turn == self.color:
                 coeff = 1
             else:
-                coeff = -1
-            return coeff * 123456789
+                coeff = -1"""
+            return self.evaluate #coeff * 123456789
         
-        if currentDepth == self.depth or len(list(board.legal_moves)) == 0 or board.is_game_over():
-            #return self.quiesce(board, alpha, beta, 1) #last term is the max quiesce depth
-            return self.quiesce(board, alpha, beta)#, 1
+        if currentDepth == self.depth or board.is_game_over():
+            return self.quiesce(board, alpha, beta, 1)#last term is the max quiesce depth
+            #return self.evaluate(board)
 
         
-        #print(self.sortMoves(board, list(board.legal_moves)))
-        for move in self.sortMoves(board, list(board.legal_moves)):
-            board.push(move)
+        push, pop = board.push, board.pop
+        for move in board.legal_moves:#Move ordering here takes more time than it saves
+            push(move)
             score = -self.negamax(board, currentDepth + 1, -beta, -alpha)
-            board.pop()
+            pop()
             
             #Alpha-Beta Pruning
             if score >= beta:
@@ -183,19 +186,15 @@ class Player:
 
 
     #Fixes horizon problem issues
-    def quiesce(self, board, alpha, beta):#currentDepth
-        #self.nodes += 1
-        #self.quiesceNodes += 1
-        
-        if t.time() - self.start >= self.moveTime:
-            if board.turn == self.color:
-                coeff = 1
-            else:
-                coeff = -1
-            return coeff * 123456789
+    #There is no time cutoff for quiesce -> would cause time errors
+    def quiesce(self, board, alpha, beta, currentDepth):
+        self.nodes += 1
+        self.quiesceNodes += 1
 
-        """if self.quiesceDepth < currentDepth:
-            self.quiesceDepth += 1"""
+
+
+        if self.quiesceDepth < currentDepth:
+            self.quiesceDepth += 1
 
         stand_pat = self.evaluate(board)
 
@@ -208,13 +207,13 @@ class Player:
             alpha = stand_pat
         
 
-        #Move Ordering yields an unecessary increase in time --- self.sortMoves(board, self.captureMoves(board))
-        for move in self.captureMoves(board):
-            board.push(move)
-            score = -self.quiesce(board, -beta, -alpha)#, currentDepth + 1
-            board.pop()
+        push, pop = board.push, board.pop
+        for move in self.captureMoves(board):#Move Ordering yields an unecessary increase in time --- self.sortMoves(board, self.captureMoves(board))
+            push(move)
+            score = -self.quiesce(board, -beta, -alpha, currentDepth + 1)
+            pop()
 
-            if score >= beta + 1:
+            if score >= beta:
                 return beta
             if score > alpha:
                 alpha = score
@@ -228,8 +227,10 @@ class Player:
         else:
             coeff = -1
         
+        #score = random.random()
         score = 0
-
+        
+        mirroredBoard = board.mirror()
         #Source for values: https://arxiv.org/pdf/2009.04374.pdf or https://en.wikipedia.org/wiki/Chess_strategy
         for (piece, value, table) in [(chess.PAWN, 100, self.pawnTable), 
                            (chess.BISHOP, 333, self.bishopTable),
@@ -239,14 +240,14 @@ class Player:
                            (chess.ROOK, 563, self.rookTable)]:
             score += (len(board.pieces(piece, self.color)) - len(board.pieces(piece, not self.color))) * value
             if board.turn:#if board.turn == chess.WHITE
-                score += sum([table[i] for i in board.pieces(piece, chess.WHITE)]) - sum([table[i] for i in board.mirror().pieces(piece, chess.BLACK)])
+                score += sum([table[i] for i in board.pieces(piece, chess.WHITE)]) - sum([table[i] for i in mirroredBoard.pieces(piece, chess.BLACK)])
             else:
-                score += sum([table[i] for i in board.mirror().pieces(piece, chess.BLACK)]) - sum([table[i] for i in board.pieces(piece, chess.WHITE)])
-
+                score += sum([table[i] for i in mirroredBoard.pieces(piece, chess.BLACK)]) - sum([table[i] for i in board.pieces(piece, chess.WHITE)])
+            
         #Will guarantee that the current board state will return the highest score due to a checkmate
         if board.is_checkmate():
             score += 20000
-        
+
         return coeff * score
 
 
@@ -254,32 +255,38 @@ class Player:
     #   -If board.turn == self.color, moves are sorted by their evaluation in decending order
     #   -If board.turn != self.color, moves are sorted by their evaluation in ascending order
     def sortMoves(self, board, moves):
+        #temp = t.time()
         sortedMoves = np.empty((0, 2))
         
+        push, pop = board.push, board.pop
         for move in moves:
-            board.push(move)
+            push(move)
             sortedMoves = np.append(sortedMoves, np.array([[move, self.miniEval(board)]]), axis = 0)
-            board.pop()
+            pop()
 
         if board.turn == self.color:
+            #self.tester += t.time() - temp
             return sortedMoves[sortedMoves[:,1].argsort()[::-1]][:,0]
         else:
+            #self.tester += t.time() - temp
             return sortedMoves[sortedMoves[:,1].argsort()][:,0]
     
 
     #Returns Capture moves for the available moves for the current player on board
     def captureMoves(self, board):
+        #temp = t.time()
         moves = []
-
-        for move in list(board.legal_moves):
+    
+        for move in board.legal_moves:
             if board.is_capture(move):
                 moves.append(move)
-        
+        #self.tester += t.time() - temp
         return moves
 
 
     #Quick evaluation function used for fast move sorting
     def miniEval(self, board):
+        #temp = t.time()
         score = 0
 
         #Does not include (chess.KING, 0), for a faster evaluation loop
@@ -289,8 +296,6 @@ class Player:
                            (chess.KNIGHT, 305),
                            (chess.ROOK, 563)]:
             score += (len(board.pieces(piece, self.color)) - len(board.pieces(piece, not self.color))) * value
-        
-        if board.is_checkmate():
-            score += 20000
-        
+
+        #self.tester += t.time() - temp
         return score
