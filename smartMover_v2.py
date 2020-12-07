@@ -9,7 +9,7 @@ class Player:
 
     def __init__(self, board, color, time):
         self.color = color
-        self.depth = 2
+        self.depth = 1
 
     #Returns the best action for the player
     def move(self, board, time):
@@ -27,7 +27,6 @@ class Player:
                 bestMoveScore = moveScore
                 bestMove = move
         
-        print(move)
         return bestMove
 
     #Evaluates the current state of the board

@@ -14,7 +14,8 @@ class Player:
     def __init__(self, board, color, time):
         self.color = color
         self.depth = 1.5
-        self.stored = np.empty((0, 2))
+        self.stored = np.empty((0, 3))
+        self.pieces = [chess.PAWN, chess.ROOK, chess.KNIGHT, chess.BISHOP, chess.QUEEN, chess.KING]
         self.pawnTable = [
         0,  0,  0,  0,  0,  0,  0,  0,
         50, 50, 50, 50, 50, 50, 50, 50,
@@ -87,13 +88,15 @@ class Player:
         ]
         self.kingTable = self.kingMiddleTable
         self.start = t.time()
+        self.nodes = 0
 
     #Returns the best action for the player
     def move(self, board, time):
         self.start = t.time()
+        self.nodes = 0
         try:
             #Opening book
-            return chess.polyglot.MemoryMappedReader("data/bookfish.bin").weighted_choice(board).move
+            return chess.polyglot.MemoryMappedReader("data/book.bin").weighted_choice(board).move
         except:
             ###If checks###
             if len(board.pieces(chess.QUEEN, self.color)) == 0 and len(board.pieces(chess.QUEEN, not self.color)) == 0:
@@ -105,14 +108,7 @@ class Player:
             beta = float('inf')
             bestMove = random.choice(moves)
             
-            sortedMoves = np.empty((0, 2))
-            for move in moves:
-                board.push(move)
-                sortedMoves = np.append(sortedMoves, np.array([[move, self.evaluate(board)]]), axis = 0)
-                board.pop()
-            moves = sortedMoves[sortedMoves[:,1].argsort()[::-1]][:,0]
-            
-            for move in moves:
+            for move in self.sortMoves(board, moves):
                 board.push(move)
                 moveScore = self.getValue(board, 0, 1, alpha, beta, time)
                 board.pop()
@@ -120,8 +116,27 @@ class Player:
                 if moveScore > bestMoveScore:
                     bestMoveScore = moveScore
                     bestMove = move
+            
+            #print("Nodes:",self.nodes)
             return bestMove
 
+
+    def miniEval(self, board):
+        score = 0
+
+        for (piece, value) in [(chess.PAWN, 100), 
+                           (chess.BISHOP, 333),
+                           (chess.QUEEN, 950),
+                           (chess.KING, 0),
+                           (chess.KNIGHT, 305),
+                           (chess.ROOK, 563)]:
+            score += len(board.pieces(piece, self.color)) * value
+            score -= len(board.pieces(piece, not self.color)) * value
+        
+        if board.is_checkmate():
+            score += float('inf')
+        return score
+        
     def evaluate(self, board):
         score = random.random()
         
@@ -154,7 +169,11 @@ class Player:
 
     #For agentIndex, 0 is the current player, 1 is the opponent.
     def getValue(self, board, currentDepth, agentIndex, alpha, beta, time):
-        if t.time() - self.start >= time - 3:
+        self.nodes += 1
+        
+        if sum([len(board.pieces(piece, chess.WHITE)) for piece in self.pieces]) + sum([len(board.pieces(piece, chess.BLACK)) for piece in self.pieces]) <= 3:
+            self.depth = 2
+        if t.time() - self.start >= time - 5:
             self.depth = 1
         if currentDepth == self.depth or board.is_game_over():
             return self.evaluate(board)
@@ -172,7 +191,7 @@ class Player:
         maxValue = float('-inf')
         moves = list(board.legal_moves)
         
-        for move in moves:
+        for move in self.sortMoves(board, moves):
             board.push(move)
             maxValue = max(maxValue, self.getValue(board, currentDepth, 1, alpha, beta, time))
             board.pop()
@@ -188,7 +207,7 @@ class Player:
         minValue = float('inf')
         moves = list(board.legal_moves)
         
-        for move in moves:
+        for move in self.sortMoves(board, moves):
             board.push(move)
             minValue = min(minValue, self.getValue(board, currentDepth + 1, 0, alpha, beta, time))
             board.pop()
@@ -199,15 +218,29 @@ class Player:
         return minValue
 
 
+    def sortMoves(self, board, moves):
+        sortedMoves = np.empty((0, 2))
+        
+        for move in moves:
+            board.push(move)
+            sortedMoves = np.append(sortedMoves, np.array([[move, self.miniEval(board)]]), axis = 0)
+            board.pop()
+        
+        if board.turn == self.color:
+            return sortedMoves[sortedMoves[:,1].argsort()[::-1]][:,0]
+        else:
+            return sortedMoves[sortedMoves[:,1].argsort()][:,0]
+        
+
     def quiesce(self, board, currentDepth, alpha, beta):
         stand_pat = self.evaluate(board)
         if stand_pat >= beta:
             return beta
         if alpha < stand_pat:
             alpha = stand_pat
-        if currentDepth >= self.depth + 1:
+        if currentDepth >= self.depth + 2:
             return alpha
-        for move in self.captureMoves(board):
+        for move in self.sortMoves(board, self.captureMoves(board)):
             board.push(move)
             score = -self.quiesce(board, currentDepth + 1, -beta, -alpha)
             board.pop()

@@ -13,7 +13,7 @@ class Player:
 
     def __init__(self, board, color, time):
         self.color = color
-        self.depth = 0
+        self.ply = 1
         self.pawnTable = [
         0,  0,  0,  0,  0,  0,  0,  0,
         50, 50, 50, 50, 50, 50, 50, 50,
@@ -96,34 +96,40 @@ class Player:
             return chess.polyglot.MemoryMappedReader("data/book.bin").weighted_choice(board).move
         except:
             self.start = t.time()      
+
             bestMove = None
-            bestMoveScore = float('-inf')
+            bestMoveScore, alpha, beta = float('-inf'), float('-inf'), float('inf')
+            self.ply = 1
             
-            self.depth = 2
-            while t.time() - self.start <= 0.2:
+            while t.time() - self.start <= 3:
                 tempTime = t.time()
 
-                alpha, beta = float('-inf'), float('inf')
-                
+                bestMoveScore, alpha, beta = float('-inf'), float('-inf'), float('inf')
+            
+                self.nodes = 0
+                                
                 #If there are no queens, the game is set as End Game
                 if len(board.pieces(chess.QUEEN, self.color)) == 0 and len(board.pieces(chess.QUEEN, not self.color)) == 0:
                     self.kingTable = self.kingEndTable
 
+                print(len(list(board.legal_moves)))
                 push, pop, negamax = board.push, board.pop, self.negamax
                 for move in self.sortMoves(board, list(board.legal_moves)):
                     push(move)
-                    score = -negamax(board, 0, -beta, -alpha)#Implementation of minimax
+                    score = -negamax(board, 1, -beta, -alpha)#Implementation of minimax
                     pop()
 
                     if score > alpha:
                         alpha = score
-                        if score > bestMoveScore:
-                            bestMoveScore = score
-                            bestMove = move
+                    if score > bestMoveScore:
+                        bestMoveScore = score
+                        bestMove = move
 
                     self.kingTable = self.kingMiddleTable
                 
-                self.depth += 1
+                print ("Color:",self.color,"|| Nodes:",self.nodes,"|| Score:",bestMoveScore,"|| Move:",bestMove,"|| Time:",time,"|| Depth Time:",t.time() - self.start,"|| Depth:",self.ply)
+
+                self.ply += 1
                 time -= t.time() - tempTime
     
             return bestMove
@@ -135,11 +141,7 @@ class Player:
         else:
             coeff = -1
         
-        #Will guarantee that the current board state will return the highest score due to a checkmate
-        if board.is_checkmate():
-            return coeff * float('inf')
-        
-        score = random.random()
+        score = 0
 
         #Source for values: https://arxiv.org/pdf/2009.04374.pdf or https://en.wikipedia.org/wiki/Chess_strategy
         pieces, square_mirror, turn, color = board.pieces, chess.square_mirror, board.turn, self.color
@@ -154,18 +156,28 @@ class Player:
             score += (len(pieces(piece, color)) - len(pieces(piece, not color))) * value
             if turn:#if board.turn == chess.WHITE
                 score += sum([table[i] for i in pieces(piece, chess.WHITE)])
-                #score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)]) #----------unecessary increase in calculation time
+                score -= sum([table[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)]) #----------unecessary increase in calculation time
             else:
                 score += sum([table[square_mirror(i)] for i in pieces(piece, chess.BLACK)])
-                #score -= sum([table[i] for i in board.pieces(piece, chess.WHITE)])
+                score -= sum([table[i] for i in board.pieces(piece, chess.WHITE)])
 
+            #Will guarantee that the current board state will return the highest score due to a checkmate
+        if board.is_checkmate():
+            score += 20000
+        
+        
         return coeff * score
 
 
     def negamax(self, board, currentDepth, alpha, beta):
-        if currentDepth >= self.depth or len(list(board.legal_moves)) == 0 or board.is_game_over():
+        self.nodes += 1
+        if currentDepth >= self.ply or len(list(board.legal_moves)) == 0 or board.is_game_over():
+            #print(currentDepth)
+            #print(not board.turn)
             return self.quiesce(board, alpha, beta, 0) #last term is the max quiesce depth
 
+        
+        #print(self.sortMoves(board, list(board.legal_moves)))
         push, pop, negamax = board.push, board.pop, self.negamax
         for move in self.sortMoves(board, list(board.legal_moves)):
             push(move)
@@ -181,6 +193,7 @@ class Player:
         return alpha
 
     def quiesce(self, board, alpha, beta, depthLeft):
+        #self.nodes += 1
         stand_pat = self.evaluate(board)
 
         #Alpha-Beta Pruning in Quiescence
@@ -200,7 +213,7 @@ class Player:
                 append(move)
 
         push, pop, quiesce = board.push, board.pop, self.quiesce
-        for move in moves:
+        for move in self.sortMoves(board, moves):
             push(move)
             score = -quiesce(board, -beta, -alpha, depthLeft - 1)
             pop()
@@ -212,7 +225,8 @@ class Player:
             
         return alpha
 
-
+    
+    #Fully Functional
     def sortMoves(self, board, moves):
         sortedMoves = np.empty((0, 2))
         
@@ -221,6 +235,7 @@ class Player:
             push(move)
             sortedMoves = append(sortedMoves, array([[move, miniEval(board)]]), axis = 0)
             pop()
+
 
         if board.turn == self.color:
             return sortedMoves[sortedMoves[:,1].argsort()[::-1]][:,0]

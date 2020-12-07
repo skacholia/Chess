@@ -16,14 +16,16 @@ class Player:
             color_str = "Black"
 
         # Print legal moves for player reference
-        print("\n\nLegal moves for " + color_str)
+        print("\nLegal moves for " + color_str)
         
+        print("(", end=" ")
         for move in board.legal_moves:
-            print(move.uci(), end=" ")
+            print(move.uci(), end=", ")
+        print(")")
 
         # Input parser loop
         while(True):
-            uci = input("\n\n" + color_str + ", type a move \n>")
+            uci = input("\n" + color_str + ", type a move \n>")
             try:
                 move = chess.Move.from_uci(uci)
 

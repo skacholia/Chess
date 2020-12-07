@@ -2,15 +2,15 @@ import chess
 import chess.pgn
 import time
 import smartMover_v4 as player1
-import smartMover_v4_1_1 as player2
+import smartMover_v4_1 as player2
 
 whiteWins = 0
 blackWins = 0
 games = 0
 p1_moveTime = 0
 p2_moveTime = 0
-iterations = 100
-graphics = False
+iterations = 20
+graphics = True
 timeWhite = 0
 timeBlack = 0
 timeStart = time.time()
@@ -22,7 +22,7 @@ for var in range(iterations):
     board = chess.Board()
     board1 = board.copy()
     board2 = board.copy()
-    playerTime = 1000
+    playerTime = 30
     p1_time = playerTime
     p2_time = playerTime
 
@@ -72,6 +72,7 @@ for var in range(iterations):
         blackWins += 1
         board.pop()
     elif p2_time <= 0:
+        #print(game)
         msg = "White wins on time"
         whiteWins += 1
         board.pop()
