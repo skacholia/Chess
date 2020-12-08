@@ -1,8 +1,8 @@
 import chess
 import chess.pgn
 import time
-import test as player1
-import smartMover_v6_1 as player2
+import smartMover_v7 as player1
+import smartMover_v7 as player2
 
 game = chess.pgn.Game()
 node = game
