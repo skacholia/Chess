@@ -4,9 +4,9 @@ import chess.polyglot
 import numpy as np
 ###MUST INSTALL numpy version 1.19.3######pip install numpy==1.19.3###
 import time as t
-#Chess AI V5
+#Chess AI V7
 #MiniMax Agent
-#November 18, 2020
+#December 6, 2020
 
 class Player:
     
@@ -88,7 +88,7 @@ class Player:
         self.quiesceDepth = 1
         self.nodes = 0
         self.quiesceNodes = 0
-        self.moveTime = 10
+        self.moveTime = 1
         self.moveNumber = 1
         self.bookMoves = 0
 
@@ -97,9 +97,10 @@ class Player:
     def move(self, board, time):
         try:
             #Selfmade opening book using https://rebel13.nl/download/polyglot.html
-            move = chess.polyglot.MemoryMappedReader("data/bookfish.bin").weighted_choice(board).move
+            #move = chess.polyglot.MemoryMappedReader("data/bookfish.bin").weighted_choice(board).move
+            print(hi)
             self.bookMoves += 1
-            return chess.polyglot.MemoryMappedReader("data/bookfish.bin").weighted_choice(board).move
+            return move
         except:
             self.start = t.time()      
             bestMove = random.choice(list(board.legal_moves))
@@ -135,7 +136,7 @@ class Player:
                     
                     self.kingTable = self.kingMiddleTable
                 previousBest = bestMove
-                #print ("Color:",self.color,"|| Nodes:",self.nodes,"|| QuiesceNodes:",self.quiesceNodes,"|| Score:",bestMoveScore,"|| Move:",bestMove,"|| Time:",time,"|| Search Time:",t.time() - self.start,"|| Depth:",self.depth,"|| Quiesce Depth:",self.quiesceDepth)
+                print ("Color:",self.color,"|| Nodes:",self.nodes,"|| QuiesceNodes:",self.quiesceNodes,"|| Score:",bestMoveScore,"|| Move:",bestMove,"|| Time:",time,"|| Search Time:",t.time() - self.start,"|| Depth:",self.depth,"|| Quiesce Depth:",self.quiesceDepth)
                 
                 self.depth += 1
                 time -= t.time() - tempTime
@@ -144,10 +145,10 @@ class Player:
             #print(self.moveTime)
 
 
-            nMoves = min(self.bookMoves, 10)
+            """nMoves = min(self.bookMoves, 10)
             factor = 2 - nMoves / 10
             target = time / (50 - self.moveNumber)
-            self.moveTime = factor * target
+            self.moveTime = factor * target"""
             #print(self.bookMoves,self.moveTime)
             return bestMove
 
@@ -214,7 +215,7 @@ class Player:
             score = -self.quiesce(board, -beta, -alpha)#, currentDepth + 1
             board.pop()
 
-            if score >= beta + 1:
+            if score >= beta:
                 return beta
             if score > alpha:
                 alpha = score
